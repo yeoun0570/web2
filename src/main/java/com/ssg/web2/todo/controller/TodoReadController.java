@@ -25,15 +25,10 @@ public class TodoReadController extends HttpServlet {
         try {
             TodoDTO todoDTO = todoService.get(tno);
 
-            // DB로부터 전달받은 글 하나를 req 에다 저장하기 (담기)
-            req.setAttribute("dto", todoDTO);
-
-            req.getRequestDispatcher("/todo/read.jsp").forward(req, resp);
-
             //쿠키 찾기
             Cookie viewTodoCookie = findCookie(req.getCookies(), "viewTodos");
             String todoListStr = viewTodoCookie.getValue();
-            boolean exist = true;
+            boolean exist = false;
 
             if (todoListStr != null && todoListStr.indexOf(tno + "-") >= 0) {
                 exist = true;
@@ -48,6 +43,10 @@ public class TodoReadController extends HttpServlet {
                 viewTodoCookie.setPath("/");
                 resp.addCookie(viewTodoCookie);
             }
+            // DB로부터 전달받은 글 하나를 req 에다 저장하기 (담기)
+            req.setAttribute("dto", todoDTO);
+
+            req.getRequestDispatcher("/todo/read.jsp").forward(req, resp);
 
 
         } catch (Exception e) {
@@ -65,6 +64,8 @@ public class TodoReadController extends HttpServlet {
 //        req.setAttribute("dto",dto);
 //        req.getRequestDispatcher("/todo/read.jsp").forward(req,resp);
 
+
+
     }
 
     private Cookie findCookie(Cookie[] cookies, String cookieName) {
@@ -80,7 +81,7 @@ public class TodoReadController extends HttpServlet {
         if(targetCookie == null) {
             targetCookie = new Cookie(cookieName,"");
             targetCookie.setPath("/");
-            targetCookie.setMaxAge(60*60*1);
+            targetCookie.setMaxAge(60*60);
         }
         return targetCookie;
     }
