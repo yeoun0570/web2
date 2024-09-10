@@ -1,0 +1,124 @@
+20224.09.06 Spring-Day5
+1. JDBC 연동 (HikariCP)- Connection Pool
+   DAO 구성하고 서비스 객체와 컨트럴러 객체를 연동해서 실행가능 한 Todo Service 구현한다.
+
+  3tier ==> 프리젠테이션  :  비지니스  : 데이터액세스  Layer  : 웹 아키텍트
+
+2. DTO vs VO
+   DTO : 각 레이어에서 전달하고자 하는 데이터를 담는 객체   (setter, getter ....@Data)
+   VO  : 읽기전용 작업을 위한 데이터 객체 (주로 getter 만을 제공)
+
+
+3. DTO => VO , VO => DTO  (VO를 읽기 전용 객체 사용 설계 했기 때문에) 변환을  위해 ModelMapper 라이브러리 사용하겠습니다.
+   ModelMapper 라이브러리
+
+
+4. ModelMapper 라이브러리 이용할때 대상 클래스의 생성자를 이용할 수 있도록 생성자 어노테이션을 적용
+   VO와 DTO 의 변환 과정은 Service 영역에서 일어나므로 modelMapper 를 사용한다. (필수는 아님)
+
+
+5. System.out.print()  ==> log(로그) 기능 제공 Log4j2 이용한다.
+   Log4j2 레벨 설정  : 개발 시 레벨의 로그 , 운영시 레벨 로그
+   -로그의 레벨 설정  : (상위레벨) FATAL => ERROR =>WARN =>INFO =>DEBUG=>TRACE(하위 레벨)
+   운영시 FATAL => ERROR =>WARN 이상
+   개발시 INFO 이하로 셋팅해서 사용함
+
+   -어펜더(Appenders) :  로그를 어떤 방식으로 기록할 것이지를 정하는 것
+
+
+   <?xml version="1.0" encoding="UTF-8"?>
+
+   <configuration status="INFO">
+
+       <Appenders>
+           <!-- 콘솔 -->
+           <Console name="console" target="SYSTEM_OUT">
+               <PatternLayout charset="UTF-8" pattern="%d{hh:mm:ss} %5p [%c] %m%n"/>
+           </Console>
+       </Appenders>
+       <loggers>
+           <logger name="org.springframework" level="INFO" additivity="false">
+               <appender-ref ref="console" />
+           </logger>
+           <logger name="com.ssg" level="INFO" additivity="false">
+           <appender-ref ref="console" />
+       </logger>
+       <root level="INFO" additivity="false">
+           <AppenderRef ref="console"/>
+       </root>
+   </loggers>
+
+ </configuration>
+==========================================================
+6. TodoService 와 TodoDAO 의 연동 확인 완료!!
+   서블릿으로 작성되어 있는 컨트롤러와 TodoService 연동 작업
+==========================================================
+
+7.
+   1)Todo의 등록기능은 GET 방식으로 등록화면 보여준다.
+   2)사용자는 register.jsp  ==> <form></form> 태그내의 입력항목을 이용하여 데이터를 입력하여 POST 방식으로 처리한다.
+
+
+8. 해당 Todo Application ver1.0 개선사항
+   - 웹 MVC 구조는 확실한 책임과 역할을 부여할 수 있는 장점이 있다.
+   - 단점
+      1) 여러개의 컨트롤러들을 작성하는 번거로움
+      2) 동일한 로직의 반복처리 -> 게시물의 조회, 수정 GET 동작으로 동작하지만, 결과를 보여주려면 JSP만 다른 형태의 반복적인 상황 발생.
+      3) 예외 처리   -> 예외가 발생하면 어떤 식 으로 처리할 지에 대한 설계가 없기 때문에 문제발생시 대비가 안되는 상황
+      4) 반복적인 메소드 호출  ->  HttpServletRequest, HttpServletResponse 를 이용해서 , TodoDTO 를 구성하는 작업, Long.pareLong(tno)
+
+      ==================> 스프링 프레임워크 두둥 ....등장
+
+9. 세션, 쿠키, 필터 , 리스너 ( 필수적인 개념)
+    과거의 상태를 저장하지 않는다. => 무상태(stateless)
+    Request, Response 를 하나의 단위로 처리하면서 사용자에 대한 정보를 기억하지 않는다.
+
+    무상태(stateless)
+    기존의 방문자를 기억하기 위해서는 메커니즘이 필요하다.
+    - 세션 (HttpSession)
+
+    - 쿠키 (Cookie)
+
+    - 특정한 문자(토큰)
+
+    ===> 로그인 유지를 위한 모든 기능을 세션 트랙킹(session Tracking)이라고 한다.
+
+=================================================================================
+Tomcat(WAS)운영하는 서블릿컨텍스트(Servlet Context)
+
+톰캣내부의 세션 저장소는 발행된 쿠키(세션키=값)들의 정보를 저장하여 보관하는 세션저장소를 운영한다. 더 이상 사용하지 않는 값들을 정리하면서 운영한다.
+session-timeout 프로퍼티를 이용하여 정리한다. (지정된 시간보다 오래된 값들은 주기적 검사를 진행하여 삭제) 톰캣의 경우 기본값 30분
+===============================================================================
+<세션을 이용한 로그인 체크 기능 구현>
+1. 시나리오
+    a. 사용자가 로그인에 성공하면 HttpSession을 이용해서 해당 사용자의 공간(세션 컨텍스트)에 특정한 객체를 이름(key) = 객체 저장한다.
+    b. 로그인 체크가 필요한 컨트롤러(TodoRegisterController)에서는 현재 사용자의 공간(세션 컨텍스트)에 지정된 이름(key)로 객체가 저장되어 있는지 확인한다.
+        i. 만약, 객체가 존재한다면 해당 사용자는 로그인된 사용자로 간주하여 로그인 페이지로 이동시켜 준다.(forward)
+
+2. 로그인 사용자만이 Todo를 등록할 수 있도록 가정
+
+3. WAS(Tomcat)
+    a. 8개의 중요 내장 객체
+        i. page
+        ii. request
+        iii. response
+        iv. session
+        v. application
+        vi. exception
+        vii. out
+        viii. config
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

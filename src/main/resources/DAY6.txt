@@ -1,0 +1,47 @@
+<필터를 이용한 로그인 체크>
+1. 로그인 여부를 체크해야하는 컨트롤러마다 동이랗게 체크하는 로직을 작성하면 같은 코드를 계속 작성해야한다.
+2. 이를 위해 우리는 필터(Servlet Filter)를 이용하여 처리한다.
+3. Servlet Filter
+    a. 필터는 특정한 서블릿이나 JSP 등에 도달하는 과정에서 필터링하는 역할을 하는 서블릿 객체이다.
+    b. @WebFilter 이용하여 특정한 경로에 접근할 때 필터가 동작하도록 설계하고 동일한 로직을 필터로 분리
+    c. 필터는 한개 이상, 여러개를 적용할 수 있다.(필터 체이닝)
+4. 한글 필터링 처리 (UTF-8 필터)
+    a. HttpServletRequest 의 데이터를 setCharacterEncoding 속성값을 UTF-8으로 셋팅
+5. 자바에서 회원 데이터 처리
+    a. 자바에서 객체 처리되도록 VO/DTO/DAO 준비한다.
+    b. domain < MemberVO
+    c. dao < MemberDAO
+        i. 회원의 아이디와 비밀번호를 받아 회원의 정보를 제공한다.
+        ii. public MemberVO getWithPassword(String mid, String mpw)
+    d. dto < MemberDTO
+    e. service < MemberService
+        i. MemberService 는 여러곳에서 동일한 객체를 사용할 수 있도록 enum으로 하나의 객체로 구성하여 MemberDAO를 이용하도록 구성
+        ii. MemberServie 내에는 로그인 처리를 위한 login() 을 작성
+        iii. LoginController 의 doPost() 에서 MemberService를 연동해서 실제로 로그인 되도록 구동
+
+6. 쿠키(HttpSession 을 이용할때)
+    a. JSESSIONID (서버쿠키, 세션쿠키)
+        i. 생성 : 자동생성
+        ii. 유효기간 : 지정 불가
+        iii. 브라우저 보관방식 : 메모리 상에서만 보관 가능
+        iv. 쿠키 사이즈(크기) : 4kb
+    b. 사용자 정의 쿠키
+        i. 생성 : 개발자가 직접 생성 => new Cookie()
+        ii. 유효기간 : 지정(초단위)
+        iii. 전송 : 반드시 HttpServletResponse 에 addCookie를 통해서 클라이언트(브라우저)에 전송
+        iv. 브라우저 보관방식
+            1. 유효기간이 없는 경우는 메모리 상에서만 보관 가능
+            2. ㅠ효기간이 있는 경우 파일로도 보관 가능
+        v. 쿠키 사이즈(크기) : 4kb
+    c. 쿠키 사용 예
+        i. 오늘 하루 이 창 열지 않기
+        ii. 최근 본 상품 목록
+        iii. 모바일에서 자동로그인 기능(쿠키 대표적 기능)
+
+7. 쿠키 동작방식의 이해 (Todo 목록에서 조회했던 Todo 번호(tno)들을 쿠키를 이용해서 보관해 본다.)
+    a. 브라우저에서 전송된 쿠키가 있는지 확인
+    b. 만약 있다면 해당 쿠키의 값(value)을 활용하고 없다면 새로운 문자열(값)을 생성한다.
+    c. 쿠키의 이름을 'viewTods'로 지정
+    d. 문자열 내에 현재 Todo의 문자번호를 문자열로 연결
+    e. '2-3-4' 형태로 연결하고 이미 조회한 번호는 추가하지 않는다.
+    f. 쿠키의 유효기간은 1분으로 지정ㅇ하고 쿠키를 담아 전송한다.
