@@ -1,5 +1,6 @@
 package com.ssg.web2.todo.controller;
 
+import com.ssg.web2.todo.dto.MemberDTO;
 import com.ssg.web2.todo.service.MemberService;
 
 import javax.servlet.ServletException;
@@ -31,9 +32,9 @@ public class LoginController extends HttpServlet {
         String mpw = req.getParameter("mpw");      //파라미터 수집
 
         try {
-            memberService.login(mid, mpw);
+            MemberDTO dto = memberService.login(mid, mpw);
             HttpSession  session = req.getSession();   //HttpSession을 이용해서 setAttribute()를 사용자 공간에 loginInfo 라는 이름으로 문자열을 보관
-            session.setAttribute("loginInfo",memberService.login(mid,mpw));
+            session.setAttribute("loginInfo",dto);
             resp.sendRedirect("/todo/list");
         } catch (Exception e) {
             resp.sendRedirect("/login?result=error");
